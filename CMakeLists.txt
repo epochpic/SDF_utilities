@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
-project(SDF_UTILITIES VERSION 2.6.12)
+project(SDF_UTILITIES VERSION 2.6.14)
 
 if(NOT TARGET sdfc)
-    find_package(SDFC 14.4.3)
+    find_package(SDFC 14.4.9)
     if(NOT SDFC_FOUND)
         add_subdirectory(../C C EXCLUDE_FROM_ALL)
     endif()
