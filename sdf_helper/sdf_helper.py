@@ -2111,33 +2111,7 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
             globals()[key] = var
             builtins.__dict__[key] = var
 
-    k = "grid"
-    if k in sdfdict:
-        vargrid = sdfdict[k]
-        grid = vargrid
-        keys = "x", "y", "z"
-        for n in range(np.size(vargrid.dims)):
-            key = keys[n]
-            var = vargrid.data[n]
-            dims = str(tuple(int(i) for i in sdfdict[k].dims))
-            if verbose:
-                print(key + dims + " = " + k)
-            globals()[key] = var
-            builtins.__dict__[key] = var
-
-    k = "grid_mid"
-    if k in sdfdict:
-        vargrid = sdfdict[k]
-        grid_mid = vargrid
-        keys = "xc", "yc", "zc"
-        for n in range(np.size(vargrid.dims)):
-            key = keys[n]
-            var = vargrid.data[n]
-            dims = str(tuple(int(i) for i in sdfdict[k].dims))
-            if verbose:
-                print(key + dims + " = " + k)
-            globals()[key] = var
-            builtins.__dict__[key] = var
+    _get_grid(data)
 
     # Export particle arrays
     for k, value in data.__dict__.items():
@@ -2173,6 +2147,37 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
     return data
 
 
+def _get_grid(data, verbose=False):
+    sdfdict = {}
+    if isinstance(data, sdf.BlockList):
+        for key, value in data.__dict__.items():
+            if hasattr(value, "id"):
+                sdfdict[value.id] = value
+            else:
+                sdfdict[key] = value
+
+    grids = "grid", "grid_mid"
+    grid_keys = ["x", "y", "z"], ["xc", "yc", "zc"]
+
+    for key, gkeys in zip(grids, grid_keys):
+        vargrid = None
+        if hasattr(data, key):
+            vargrid = data.grid
+        elif key in sdfdict:
+            vargrid = sdfdict[key]
+
+        if vargrid:
+            globals()[key] = vargrid
+            for n in range(np.size(vargrid.dims)):
+                key = gkeys[n]
+                var = vargrid.data[n]
+                dims = str(tuple(int(i) for i in vargrid.dims))
+                if verbose:
+                    print(key + dims + " = " + k)
+                globals()[key] = var
+                builtins.__dict__[key] = var
+
+
 def ogrid(skip=None, **kwargs):
     global x, y, mult_x, mult_y
     if np.ndim(x) == 1:
@@ -2194,8 +2199,15 @@ def ogrid(skip=None, **kwargs):
 
 
 def plotgrid(fname=None, iso=None, title=True):
-    if isinstance(fname, sdf.BlockList) or isinstance(fname, dict):
+    global grid
+    if (
+        isinstance(fname, sdf.BlockList)
+        or isinstance(fname, dict)
+        or hasattr(fname, "grid")
+    ):
         dat = fname
+        _get_grid(dat)
+        title = False
     elif fname is not None:
         dat = getdata(fname, verbose=verbose)
 
