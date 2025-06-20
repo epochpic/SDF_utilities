@@ -888,7 +888,7 @@ def plot1d(
     if title:
         subplot.set_title(get_title(var), fontsize="large", y=1.03)
 
-    figure.set_tight_layout(True)
+    figure.set_layout_engine("tight")
     figure.canvas.draw()
 
 
@@ -997,7 +997,7 @@ def plot_path(
         elif figure is None:
             figure = subplot.figure
         subplot.axis(plot_path.axis)
-        figure.set_tight_layout(True)
+        figure.set_layout_engine("tight")
         figure.canvas.draw()
         return
 
@@ -1251,7 +1251,7 @@ def plot_path(
             subplot.axis(lim)
 
     if update:
-        figure.set_tight_layout(True)
+        figure.set_layout_engine("tight")
         figure.canvas.draw()
 
 
@@ -1633,7 +1633,7 @@ def plot2d_array(
                 cbar.set_label(var_label, fontsize="large", x=1.2)
     figure.canvas.draw()
 
-    figure.set_tight_layout(True)
+    figure.set_layout_engine("tight")
     figure.canvas.draw()
 
 
@@ -1957,7 +1957,7 @@ def plot_levels(
         # gs.update(right=1-tw/fw)
         # ax.set_position([box.x0, box.y0, box.width + bw, box.height])
     else:
-        fig.set_tight_layout(True)
+        fig.set_layout_engine("tight")
     plt.draw()
 
 
@@ -2223,7 +2223,7 @@ def plotgrid(fname=None, iso=None, title=True):
     plt.draw()
 
     fig = plt.gcf()
-    fig.set_tight_layout(True)
+    fig.set_layout_engine("tight")
     plt.draw()
 
 
