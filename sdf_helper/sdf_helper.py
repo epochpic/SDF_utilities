@@ -1300,6 +1300,11 @@ def plot_rays(var, skip=1, rays=None, **kwargs):
                 kwargs["hold"] = True
             return
 
+        if rays:
+            ray_list = [var.data[i] for i in rays]
+        else:
+            ray_list = var.data[ray_slice]
+
         if not isinstance(v, sdf.BlockLagrangianMesh):
             k = "cbar_label"
             if k not in kwargs or (
@@ -1311,30 +1316,23 @@ def plot_rays(var, skip=1, rays=None, **kwargs):
             k0 = "vmin"
             k1 = "vmax"
             k = "vrange"
-            if k not in kwargs and not (k0 in kwargs and k1 in kwargs):
-                v = var.data[0]
-                vmin = v.data.min()
-                vmax = v.data.max()
-                if rays:
-                    ray_list = [var.data[i] for i in rays]
-                else:
-                    ray_list = var.data[ray_slice]
+            vmin, vmax = 1e99, -1e99
+            if k not in kwargs and not (k0 in kwargs and k1 in kwargs) \
+                    and len(ray_list) > 0:
                 for v in ray_list:
-                    vmin = min(vmin, v.data.min())
-                    vmax = max(vmax, v.data.max())
-                if k0 not in kwargs:
-                    kwargs[k0] = vmin
-                if k1 not in kwargs:
-                    kwargs[k1] = vmax
+                    if len(v.data) > 0:
+                        vmin = min(vmin, v.data.min())
+                        vmax = max(vmax, v.data.max())
 
-        if rays:
-            ray_list = [var.data[i] for i in rays]
-        else:
-            ray_list = var.data[ray_slice]
+            if k0 not in kwargs:
+                kwargs[k0] = vmin
+            if k1 not in kwargs:
+                kwargs[k1] = vmax
 
         for v in ray_list:
-            plot_auto(v, update=False, **kwargs)
-            kwargs["hold"] = True
+            if len(v.data) > 0:
+                plot_auto(v, update=False, **kwargs)
+                kwargs["hold"] = True
 
         plot_auto(var.data[0], axis_only=True, **kwargs)
         kwargs["hold"] = True
