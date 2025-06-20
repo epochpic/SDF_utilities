@@ -1317,8 +1317,11 @@ def plot_rays(var, skip=1, rays=None, **kwargs):
             k1 = "vmax"
             k = "vrange"
             vmin, vmax = 1e99, -1e99
-            if k not in kwargs and not (k0 in kwargs and k1 in kwargs) \
-                    and len(ray_list) > 0:
+            if (
+                k not in kwargs
+                and not (k0 in kwargs and k1 in kwargs)
+                and len(ray_list) > 0
+            ):
                 for v in ray_list:
                     if len(v.data) > 0:
                         vmin = min(vmin, v.data.min())
