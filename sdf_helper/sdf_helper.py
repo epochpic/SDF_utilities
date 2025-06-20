@@ -2044,7 +2044,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
         else:
             sdfdict[key] = value
 
-    fdict = {}
     table = {"time": "t"}
     k = "Header"
     if k in sdfdict:
@@ -2055,7 +2054,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
             var = h[k]
             if verbose:
                 print(key + str(np.shape(var)) + " = " + k)
-            fdict[key] = var
             globals()[key] = var
             builtins.__dict__[key] = var
 
@@ -2110,7 +2108,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
             dims = str(tuple(int(i) for i in sdfdict[k].dims))
             if verbose:
                 print(key + dims + " = " + k)
-            fdict[key] = var
             globals()[key] = var
             builtins.__dict__[key] = var
 
@@ -2125,7 +2122,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
             dims = str(tuple(int(i) for i in sdfdict[k].dims))
             if verbose:
                 print(key + dims + " = " + k)
-            fdict[key] = var
             globals()[key] = var
             builtins.__dict__[key] = var
 
@@ -2140,7 +2136,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
             dims = str(tuple(int(i) for i in sdfdict[k].dims))
             if verbose:
                 print(key + dims + " = " + k)
-            fdict[key] = var
             globals()[key] = var
             builtins.__dict__[key] = var
 
@@ -2159,7 +2154,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
         if isinstance(value, sdf.BlockPointVariable):
             if verbose:
                 print(key + dims + " = " + value.name)
-            fdict[key] = var
             globals()[key] = var
             builtins.__dict__[key] = var
         else:
@@ -2172,7 +2166,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
                 dims = str(tuple(int(i) for i in value.dims))
                 if verbose:
                     print(gkey + dims + " = " + k + " " + keys[n])
-                fdict[gkey] = var
                 globals()[gkey] = var
                 builtins.__dict__[gkey] = var
 
