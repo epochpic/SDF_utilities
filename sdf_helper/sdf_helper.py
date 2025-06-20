@@ -888,7 +888,7 @@ def plot1d(
     if title:
         subplot.set_title(get_title(var), fontsize="large", y=1.03)
 
-    figure.set_tight_layout(True)
+    figure.set_layout_engine("tight")
     figure.canvas.draw()
 
 
@@ -997,7 +997,7 @@ def plot_path(
         elif figure is None:
             figure = subplot.figure
         subplot.axis(plot_path.axis)
-        figure.set_tight_layout(True)
+        figure.set_layout_engine("tight")
         figure.canvas.draw()
         return
 
@@ -1251,7 +1251,7 @@ def plot_path(
             subplot.axis(lim)
 
     if update:
-        figure.set_tight_layout(True)
+        figure.set_layout_engine("tight")
         figure.canvas.draw()
 
 
@@ -1300,6 +1300,11 @@ def plot_rays(var, skip=1, rays=None, **kwargs):
                 kwargs["hold"] = True
             return
 
+        if rays:
+            ray_list = [var.data[i] for i in rays]
+        else:
+            ray_list = var.data[ray_slice]
+
         if not isinstance(v, sdf.BlockLagrangianMesh):
             k = "cbar_label"
             if k not in kwargs or (
@@ -1311,30 +1316,26 @@ def plot_rays(var, skip=1, rays=None, **kwargs):
             k0 = "vmin"
             k1 = "vmax"
             k = "vrange"
-            if k not in kwargs and not (k0 in kwargs and k1 in kwargs):
-                v = var.data[0]
-                vmin = v.data.min()
-                vmax = v.data.max()
-                if rays:
-                    ray_list = [var.data[i] for i in rays]
-                else:
-                    ray_list = var.data[ray_slice]
+            vmin, vmax = 1e99, -1e99
+            if (
+                k not in kwargs
+                and not (k0 in kwargs and k1 in kwargs)
+                and len(ray_list) > 0
+            ):
                 for v in ray_list:
-                    vmin = min(vmin, v.data.min())
-                    vmax = max(vmax, v.data.max())
-                if k0 not in kwargs:
-                    kwargs[k0] = vmin
-                if k1 not in kwargs:
-                    kwargs[k1] = vmax
+                    if len(v.data) > 0:
+                        vmin = min(vmin, v.data.min())
+                        vmax = max(vmax, v.data.max())
 
-        if rays:
-            ray_list = [var.data[i] for i in rays]
-        else:
-            ray_list = var.data[ray_slice]
+            if k0 not in kwargs:
+                kwargs[k0] = vmin
+            if k1 not in kwargs:
+                kwargs[k1] = vmax
 
         for v in ray_list:
-            plot_auto(v, update=False, **kwargs)
-            kwargs["hold"] = True
+            if len(v.data) > 0:
+                plot_auto(v, update=False, **kwargs)
+                kwargs["hold"] = True
 
         plot_auto(var.data[0], axis_only=True, **kwargs)
         kwargs["hold"] = True
@@ -1635,7 +1636,7 @@ def plot2d_array(
                 cbar.set_label(var_label, fontsize="large", x=1.2)
     figure.canvas.draw()
 
-    figure.set_tight_layout(True)
+    figure.set_layout_engine("tight")
     figure.canvas.draw()
 
 
@@ -1959,7 +1960,7 @@ def plot_levels(
         # gs.update(right=1-tw/fw)
         # ax.set_position([box.x0, box.y0, box.width + bw, box.height])
     else:
-        fig.set_tight_layout(True)
+        fig.set_layout_engine("tight")
     plt.draw()
 
 
@@ -2043,7 +2044,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
         else:
             sdfdict[key] = value
 
-    fdict = {}
     table = {"time": "t"}
     k = "Header"
     if k in sdfdict:
@@ -2054,7 +2054,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
             var = h[k]
             if verbose:
                 print(key + str(np.shape(var)) + " = " + k)
-            fdict[key] = var
             globals()[key] = var
             builtins.__dict__[key] = var
 
@@ -2109,39 +2108,10 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
             dims = str(tuple(int(i) for i in sdfdict[k].dims))
             if verbose:
                 print(key + dims + " = " + k)
-            fdict[key] = var
             globals()[key] = var
             builtins.__dict__[key] = var
 
-    k = "grid"
-    if k in sdfdict:
-        vargrid = sdfdict[k]
-        grid = vargrid
-        keys = "x", "y", "z"
-        for n in range(np.size(vargrid.dims)):
-            key = keys[n]
-            var = vargrid.data[n]
-            dims = str(tuple(int(i) for i in sdfdict[k].dims))
-            if verbose:
-                print(key + dims + " = " + k)
-            fdict[key] = var
-            globals()[key] = var
-            builtins.__dict__[key] = var
-
-    k = "grid_mid"
-    if k in sdfdict:
-        vargrid = sdfdict[k]
-        grid_mid = vargrid
-        keys = "xc", "yc", "zc"
-        for n in range(np.size(vargrid.dims)):
-            key = keys[n]
-            var = vargrid.data[n]
-            dims = str(tuple(int(i) for i in sdfdict[k].dims))
-            if verbose:
-                print(key + dims + " = " + k)
-            fdict[key] = var
-            globals()[key] = var
-            builtins.__dict__[key] = var
+    _get_grid(data)
 
     # Export particle arrays
     for k, value in data.__dict__.items():
@@ -2158,7 +2128,6 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
         if isinstance(value, sdf.BlockPointVariable):
             if verbose:
                 print(key + dims + " = " + value.name)
-            fdict[key] = var
             globals()[key] = var
             builtins.__dict__[key] = var
         else:
@@ -2171,12 +2140,42 @@ def getdata(fname, wkd=None, verbose=True, squeeze=False):
                 dims = str(tuple(int(i) for i in value.dims))
                 if verbose:
                     print(gkey + dims + " = " + k + " " + keys[n])
-                fdict[gkey] = var
                 globals()[gkey] = var
                 builtins.__dict__[gkey] = var
 
     # X, Y = np.meshgrid(x, y)
     return data
+
+
+def _get_grid(data, verbose=False):
+    sdfdict = {}
+    if isinstance(data, sdf.BlockList):
+        for key, value in data.__dict__.items():
+            if hasattr(value, "id"):
+                sdfdict[value.id] = value
+            else:
+                sdfdict[key] = value
+
+    grids = "grid", "grid_mid"
+    grid_keys = ["x", "y", "z"], ["xc", "yc", "zc"]
+
+    for key, gkeys in zip(grids, grid_keys):
+        vargrid = None
+        if hasattr(data, key):
+            vargrid = data.grid
+        elif key in sdfdict:
+            vargrid = sdfdict[key]
+
+        if vargrid:
+            globals()[key] = vargrid
+            for n in range(np.size(vargrid.dims)):
+                key = gkeys[n]
+                var = vargrid.data[n]
+                dims = str(tuple(int(i) for i in vargrid.dims))
+                if verbose:
+                    print(key + dims + " = " + k)
+                globals()[key] = var
+                builtins.__dict__[key] = var
 
 
 def ogrid(skip=None, **kwargs):
@@ -2200,8 +2199,15 @@ def ogrid(skip=None, **kwargs):
 
 
 def plotgrid(fname=None, iso=None, title=True):
-    if isinstance(fname, sdf.BlockList) or isinstance(fname, dict):
+    global grid
+    if (
+        isinstance(fname, sdf.BlockList)
+        or isinstance(fname, dict)
+        or hasattr(fname, "grid")
+    ):
         dat = fname
+        _get_grid(dat)
+        title = False
     elif fname is not None:
         dat = getdata(fname, verbose=verbose)
 
@@ -2225,7 +2231,7 @@ def plotgrid(fname=None, iso=None, title=True):
     plt.draw()
 
     fig = plt.gcf()
-    fig.set_tight_layout(True)
+    fig.set_layout_engine("tight")
     plt.draw()
 
 
