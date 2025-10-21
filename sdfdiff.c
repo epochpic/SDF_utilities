@@ -49,7 +49,7 @@
 #include <mpi.h>
 #endif
 
-#define VERSION "2.6.15"
+#define VERSION "2.6.16"
 
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define ABS(a) (((a) < 0.0) ? -(a) : (a))
@@ -1494,7 +1494,6 @@ int diff_mesh(sdf_file_t **handles, sdf_block_t *b1, sdf_block_t *b2, int inum)
     int gotblock;
     static int gotdiff = 0;
     static const int fmtlen = 32;
-    static const int idxlen = 64;
     // char idxstr[idxlen]; doesn't work with Microsoft Visual C, so:
     char idxstr[64];
     char *prestr;
