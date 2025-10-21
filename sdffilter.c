@@ -2223,6 +2223,13 @@ int main(int argc, char **argv)
         free(variable_ids);
     }
 
+    id_entry = id_entry_head;
+    while (id_entry) {
+        id_entry_head = id_entry->next;
+        free(id_entry);
+        id_entry = id_entry_head;
+    }
+
     err += close_files(h);
     return err;
 }
