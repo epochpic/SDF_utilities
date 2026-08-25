@@ -123,13 +123,13 @@ if(BUILD_SDFPY)
        TARGET SDF_UTILITIES_GENERATED_SOURCE PRE_BUILD
        COMMAND ${CMAKE_COMMAND} -E copy setup_$<CONFIG>.py setup.py
        BYPRODUCTS setup.py
-       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/setup_$<CONFIG>.py)
+   )
 
    add_custom_command(
        TARGET SDF_UTILITIES_GENERATED_SOURCE PRE_BUILD
        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/sdf_legacy.py .
        BYPRODUCTS sdf_legacy.py
-       DEPENDS sdf_legacy.py)
+   )
 
    add_custom_command(OUTPUT build/timestamp
       COMMAND ${Python3_EXECUTABLE} setup.py build ${DEBUG_OPT}
