@@ -32,13 +32,13 @@ add_definitions(-D_XOPEN_SOURCE=600)
 include_directories(${SDFC_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 find_package(Git)
-add_custom_target(SDF_UTILITIES_GENERATED_SOURCE)
 add_custom_command(
-    TARGET SDF_UTILITIES_GENERATED_SOURCE PRE_BUILD
+    OUTPUT commit_info.h
     COMMAND ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -DOUTDIR=${CMAKE_CURRENT_BINARY_DIR}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/CommitInfo.cmake
-    BYPRODUCTS commit_info.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/CommitInfo.cmake commit_info.h.in
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_target(SDF_UTILITIES_GENERATED_SOURCE DEPENDS commit_info.h)
 
 add_executable(sdf2ascii sdf2ascii.c)
 add_dependencies(sdf2ascii SDF_UTILITIES_GENERATED_SOURCE)
@@ -120,21 +120,23 @@ if(BUILD_SDFPY)
    configure_file(setup.py.in setup.py.in)
    file(GENERATE OUTPUT setup_$<CONFIG>.py INPUT ${CMAKE_CURRENT_BINARY_DIR}/setup.py.in)
    add_custom_command(
-       TARGET SDF_UTILITIES_GENERATED_SOURCE PRE_BUILD
+       OUTPUT setup.py
        COMMAND ${CMAKE_COMMAND} -E copy setup_$<CONFIG>.py setup.py
-       BYPRODUCTS setup.py
+       DEPENDS setup_$<CONFIG>.py
    )
 
    add_custom_command(
-       TARGET SDF_UTILITIES_GENERATED_SOURCE PRE_BUILD
-       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/sdf_legacy.py .
-       BYPRODUCTS sdf_legacy.py
+       OUTPUT sdf_legacy.py
+       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/sdf_legacy.py .
+       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/sdf_legacy.py
    )
+
+   add_custom_target(SDFPY_GENERATED DEPENDS setup.py sdf_legacy.py SDF_UTILITIES_GENERATED_SOURCE)
 
    add_custom_command(OUTPUT build/timestamp
       COMMAND ${Python3_EXECUTABLE} setup.py build ${DEBUG_OPT}
       COMMAND ${CMAKE_COMMAND} -E touch build/timestamp
-      DEPENDS setup.py sdf_python.c sdf_legacy.py sdfc SDF_UTILITIES_GENERATED_SOURCE)
+      DEPENDS setup.py sdf_python.c sdf_legacy.py sdfc SDFPY_GENERATED)
    add_custom_target(sdfpy ALL DEPENDS build/timestamp)
 
    configure_file(sdfpy_install.cmake.in sdfpy_install.cmake @ONLY)
@@ -153,7 +155,7 @@ if(BUILD_SDFPY)
 
       add_custom_command(OUTPUT ${SDFPY_WHEEL}
           COMMAND ${Python3_EXECUTABLE} -m pip --disable-pip-version-check wheel .
-          DEPENDS setup.py sdf_python.c commit_info.h sdfc SDF_UTILITIES_GENERATED_SOURCE)
+          DEPENDS setup.py sdf_python.c sdfc SDFPY_GENERATED)
       add_custom_target(sdfpy_wheel ALL DEPENDS ${SDFPY_WHEEL})
       install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${SDFPY_WHEEL} ${NUMPY_WHEEL}
           DESTINATION python COMPONENT pywheel)
